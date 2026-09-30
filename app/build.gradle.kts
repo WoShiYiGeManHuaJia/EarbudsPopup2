@@ -19,11 +19,33 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
+            // CI 会在 build.yml 中提前生成 release.keystore（固定 debug 签名密钥）
+            val ks = file(rootProject.projectDir, "release.keystore")
+            if (ks.exists()) {
+                signingConfig = signingConfigs.create("release") {
+                    storeFile = ks
+                    storePassword = "android"
+                    keyAlias = "release"
+                    keyPassword = "android"
+                }
+            }
         }
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            signingConfig = signingConfigs.getByName("debug")
+            // CI 会在 build.yml 中提前生成 release.keystore（固定 debug 签名密钥）
+            val ks = file(rootProject.projectDir, "release.keystore")
+            if (ks.exists()) {
+                signingConfig = signingConfigs.create("release") {
+                    storeFile = ks
+                    storePassword = "android"
+                    keyAlias = "release"
+                    keyPassword = "android"
+                }
+            } else {
+                // 本地开发/无 keystore 时复用 debug 签名
+                signingConfig = signingConfigs.getByName("debug")
+            }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
