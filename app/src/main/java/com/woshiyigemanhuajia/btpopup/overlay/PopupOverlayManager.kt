@@ -20,6 +20,7 @@ import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -29,6 +30,8 @@ import coil.load
 import com.woshiyigemanhuajia.btpopup.R
 import com.woshiyigemanhuajia.btpopup.battery.BatteryInfo
 import com.woshiyigemanhuajia.btpopup.util.Prefs
+import com.woshiyigemanhuajia.btpopup.widget.RoundedCardLayout
+import com.woshiyigemanhuajia.btpopup.widget.RoundedImageView
 
 /**
  * 系统级悬浮弹窗（TYPE_APPLICATION_OVERLAY）。
@@ -37,6 +40,9 @@ import com.woshiyigemanhuajia.btpopup.util.Prefs
 object PopupOverlayManager {
 
     private const val TAG = "PopupOverlay"
+
+    /** 横屏卡片扁平比例：自动高度 = 卡片宽度 × 该比例，保证横屏永远是"扁长"形态 */
+    private const val LAND_FLAT_RATIO = 0.46f
 
     private val main = Handler(Looper.getMainLooper())
 
@@ -72,6 +78,39 @@ object PopupOverlayManager {
 
     fun dismiss() {
         main.post { removeInternal(true) }
+    }
+
+    // ------------------------------------------------------------------ 预览（设置页舞台复用同一套布局与样式）
+
+    /** 横屏卡片高度：固定 dp 优先，否则按"宽度 × 扁平比例"计算，保证横屏永远是扁长形态 */
+    fun landscapeAutoHeightPx(context: Context, widthPx: Int): Int {
+        val density = context.resources.displayMetrics.density
+        val minH = (96 * density).toInt()
+        if (Prefs.landHeightFixed) {
+            return (Prefs.landHeightDp.coerceIn(60, 900) * density).toInt().coerceAtLeast(minH)
+        }
+        return (widthPx * LAND_FLAT_RATIO).toInt().coerceAtLeast(minH)
+    }
+
+    /** 用与真实悬浮窗完全相同的布局 / 数据绑定 / 样式逻辑创建预览视图 */
+    fun createPreviewView(
+        context: Context,
+        landscape: Boolean,
+        info: BatteryInfo,
+        imageUri: String?
+    ): View {
+        val layoutId = if (landscape) R.layout.popup_overlay_landscape else R.layout.popup_overlay_portrait
+        val view = LayoutInflater.from(context).inflate(layoutId, null)
+        bindData(view, info)
+        applyImage(context, view, imageUri)
+        applyPanelStyle(view, landscape, if (landscape) Prefs.landHeightFixed else Prefs.heightFixed)
+        return view
+    }
+
+    /** 外观参数变化后只重套样式（圆角 / 透明度 / 配色 / 尺寸），同一张图片不重复解码，GIF 不会被打断重播 */
+    fun restylePreviewView(context: Context, view: View, landscape: Boolean) {
+        applyPanelStyle(view, landscape, if (landscape) Prefs.landHeightFixed else Prefs.heightFixed)
+        applyImage(context, view, Prefs.imageUri)
     }
 
     // ------------------------------------------------------------------
@@ -113,27 +152,40 @@ object PopupOverlayManager {
         val heightDp = if (landscape) Prefs.landHeightDp else Prefs.heightDp
         val fixedHeightPx = (heightDp * density).toInt().coerceAtLeast(minW / 2)
 
+        val minH = (96 * density).toInt().coerceAtMost(screenH)
+        // 横屏卡片高度永远是确定的（固定 dp 或 宽度 × 扁平比例）；竖屏默认由内容决定高度
+        val finalH = when {
+            landscape -> landscapeAutoHeightPx(context, widthPx).coerceIn(minH, screenH)
+            fixedHeight -> fixedHeightPx.coerceIn(minH, screenH)
+            else -> 0
+        }
+
         // 先套用最终样式（含图片区尺寸），再测量，避免"拉宽/拉高后出现空白"
         bindData(view, info)
         applyImage(context, view, imageUri)
         applyPanelStyle(view, landscape, fixedHeight)
 
         val widthSpec = View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY)
-        val heightSpec = if (fixedHeight) {
-            View.MeasureSpec.makeMeasureSpec(fixedHeightPx, View.MeasureSpec.EXACTLY)
+        val heightSpec = if (finalH > 0) {
+            View.MeasureSpec.makeMeasureSpec(finalH, View.MeasureSpec.EXACTLY)
         } else {
             View.MeasureSpec.makeMeasureSpec(screenH, View.MeasureSpec.AT_MOST)
         }
         view.measure(widthSpec, heightSpec)
 
-        val minH = (96 * density).toInt().coerceAtMost(screenH)
-        val measuredH = view.measuredHeight.coerceIn(minH, screenH)
-        val finalH = if (fixedHeight) fixedHeightPx else measuredH
+        val contentH = if (finalH > 0) finalH else view.measuredHeight.coerceIn(minH, screenH)
 
-        var x = (screenW * Prefs.posXPercent / 100f - widthPx / 2f).toInt()
-        var y = (screenH * Prefs.posYPercent / 100f - finalH / 2f).toInt()
-        x = x.coerceIn(marginPx, (screenW - widthPx - marginPx).coerceAtLeast(marginPx))
-        y = y.coerceIn(marginPx, (screenH - finalH - marginPx).coerceAtLeast(marginPx))
+        // 位置映射：把进度条 0-100 映射到「可摆放的空白区间」——与设置页预览舞台完全同一套公式，
+        // 因此拖动滑块全程都真实生效，不会出现"拖到一半就卡住不动"
+        val freeX = (screenW - widthPx - marginPx * 2).coerceAtLeast(0)
+        val freeY = (screenH - contentH - marginPx * 2).coerceAtLeast(0)
+        val x = marginPx + (freeX * Prefs.posXPercent.coerceIn(0, 100) / 100f).toInt()
+        val y = marginPx + (freeY * Prefs.posYPercent.coerceIn(0, 100) / 100f).toInt()
+        Log.i(
+            TAG,
+            "弹窗定位 x=" + x + " y=" + y + " 尺寸 " + widthPx + "x" + contentH +
+                " 横屏=" + landscape + " 进度条 posX=" + Prefs.posXPercent + " posY=" + Prefs.posYPercent
+        )
 
         val type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         val flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -142,7 +194,7 @@ object PopupOverlayManager {
 
         val lp = WindowManager.LayoutParams(
             widthPx,
-            if (fixedHeight) finalH else WindowManager.LayoutParams.WRAP_CONTENT,
+            if (finalH > 0) finalH else WindowManager.LayoutParams.WRAP_CONTENT,
             type,
             flags,
             PixelFormat.TRANSLUCENT
@@ -304,13 +356,23 @@ object PopupOverlayManager {
         val hint = view.findViewById<View>(R.id.noImageHint)
 
         val density = context.resources.displayMetrics.density
-        val radiusPx = Prefs.cornerRadiusDp * density * 0.72f
-        image.outlineProvider = object : ViewOutlineProvider() {
-            override fun getOutline(v: View, outline: Outline) {
-                outline.setRoundRect(0, 0, v.width, v.height, radiusPx)
+        // 横屏（图片铺满卡片）用整卡圆角；竖屏图片在面板内留了内边距，圆角收一点更自然
+        val onCard = view.findViewById<View>(R.id.card) != null
+        val radiusPx = Prefs.cornerRadiusDp.coerceIn(0, 200) * density * (if (onCard) 1f else 0.72f)
+
+        if (image is RoundedImageView) {
+            // 参考外观的圆角图片：离屏 DST_IN 遮罩裁剪，边缘带抗锯齿
+            image.setRadius(radiusPx)
+            image.clipToOutline = false
+            image.outlineProvider = null
+        } else {
+            image.outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(v: View, outline: Outline) {
+                    outline.setRoundRect(0, 0, v.width, v.height, radiusPx)
+                }
             }
+            image.clipToOutline = true
         }
-        image.clipToOutline = true
         // 图片 / GIF 缩放模式可调，解决"只能调一点点大小"的观感问题
         image.scaleType = when (Prefs.imageScaleMode) {
             "fit" -> ImageView.ScaleType.FIT_CENTER
@@ -337,40 +399,54 @@ object PopupOverlayManager {
 
     private fun applyPanelStyle(view: View, landscape: Boolean, fixedHeight: Boolean) {
         val density = view.context.resources.displayMetrics.density
+        val radiusPx = Prefs.cornerRadiusDp.coerceIn(0, 200) * density
+        val alpha = (Prefs.panelAlpha.coerceIn(0, 100) * 255 / 100).coerceIn(0, 255)
+        val panelColor = ColorUtils.setAlphaComponent(Prefs.panelColor or (0xFF shl 24), alpha)
 
-        // 面板背景：颜色 + 圆角 + 不透明度（颜色从此可自定义）
-        val bg = view.background?.mutate() as? GradientDrawable
-        if (bg != null) {
-            bg.cornerRadius = Prefs.cornerRadiusDp.coerceIn(0, 200) * density
-            val alpha = (Prefs.panelAlpha.coerceIn(0, 100) * 255 / 100).coerceIn(0, 255)
-            bg.setColor(ColorUtils.setAlphaComponent(Prefs.panelColor or (0xFF shl 24), alpha))
-            view.background = bg
+        // 参考外观：横屏的圆角 / 底色 / 裁剪全部交给 RoundedCardLayout 处理，
+        // 这样"图片铺满整张卡片"时四个角也会被平滑裁掉，不会出现直角毛边
+        val card = view.findViewById<View>(R.id.card) as? RoundedCardLayout
+        if (card != null) {
+            card.setCardStyle(radiusPx, panelColor, Prefs.accentColor or (0xFF shl 24), 0f)
+        } else {
+            // 竖屏：直接改根布局的圆角面板背景（颜色 + 圆角 + 不透明度）
+            val bg = view.background?.mutate() as? GradientDrawable
+            if (bg != null) {
+                bg.cornerRadius = radiusPx
+                bg.setColor(panelColor)
+                view.background = bg
+            }
         }
 
         // 图片区尺寸：高度按 dp 精确生效，不再被旧公式压缩成几十 dp
         val wrap = view.findViewById<View>(R.id.imageWrap)
-        (wrap?.layoutParams as? LinearLayout.LayoutParams)?.let { lp ->
-            val targetDp = Prefs.imageHeightDp.coerceIn(40, 600)
-            when {
-                landscape -> {
-                    val h = (targetDp * 0.55f).toInt().coerceIn(40, 220)
-                    lp.width = (h * 1.5f * density).toInt()
-                    lp.height = (h * density).toInt()
-                    lp.weight = 0f
+        when (val lp = wrap?.layoutParams) {
+            is LinearLayout.LayoutParams -> {
+                val targetDp = Prefs.imageHeightDp.coerceIn(40, 600)
+                when {
+                    fixedHeight -> {
+                        // 固定高度时让图片区吃掉剩余空间，杜绝底部莫名空白
+                        lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                        lp.height = 0
+                        lp.weight = 1f
+                    }
+                    else -> {
+                        lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                        lp.height = (targetDp * density).toInt()
+                        lp.weight = 0f
+                    }
                 }
-                fixedHeight -> {
-                    // 固定高度时让图片区吃掉剩余空间，杜绝底部莫名空白
-                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT
-                    lp.height = 0
-                    lp.weight = 1f
-                }
-                else -> {
-                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT
-                    lp.height = (targetDp * density).toInt()
-                    lp.weight = 0f
+                wrap.layoutParams = lp
+            }
+            is FrameLayout.LayoutParams -> {
+                if (landscape) {
+                    // 横屏参考外观：媒体区铺满整张卡片，图片本身就是卡片背景
+                    lp.width = FrameLayout.LayoutParams.MATCH_PARENT
+                    lp.height = FrameLayout.LayoutParams.MATCH_PARENT
+                    wrap.layoutParams = lp
                 }
             }
-            wrap.layoutParams = lp
+            else -> Unit
         }
 
         applyColors(view)
