@@ -87,36 +87,38 @@ object Prefs {
         get() = gi("height_dp", 300)
         set(v) = si("height_dp", v)
 
-    /** 弹窗中心水平位置 0-100（相对屏幕宽） */
+    /** 弹窗水平位置 0-100（0 贴左边缘 / 100 贴右边缘，映射到可摆放的空白区间） */
     var posXPercent: Int
         get() = gi("pos_x", 50)
-        set(v) = si("pos_x", 50)
+        set(v) = si("pos_x", v)
 
-    /** 弹窗中心垂直位置 0-100（相对屏幕高） */
+    /** 弹窗垂直位置 0-100（0 贴顶 / 100 贴底，映射到可摆放的空白区间） */
     var posYPercent: Int
         get() = gi("pos_y", 50)
-        set(v) = si("pos_y", 50)
+        set(v) = si("pos_y", v)
 
     var cornerRadiusDp: Int
         get() = gi("corner_radius", 28)
-        set(v) = si("corner_radius", 28)
+        set(v) = si("corner_radius", v)
 
     // ---------------- 横屏 ----------------
     var landWidthPercent: Int
         get() = gi("land_width_percent", 64)
-        set(v) = si("land_width_percent", 64)
+        set(v) = si("land_width_percent", v)
 
     var landHeightFixed: Boolean
         get() = gb("land_height_fixed", false)
-        set(v) = sb("land_height_fixed", false)
+        set(v) = sb("land_height_fixed", v)
 
+    /** 固定高度时生效；自动高度 = 卡片宽度 × 扁平比例（保证永远是扁长形态） */
     var landHeightDp: Int
         get() = gi("land_height_dp", 120)
-        set(v) = si("land_height_dp", 120)
+        set(v) = si("land_height_dp", v)
 
+    /** 横屏弹窗距屏幕左右边缘的最小留白 */
     var landMarginDp: Int
         get() = gi("land_margin", 28)
-        set(v) = si("land_margin", 28)
+        set(v) = si("land_margin", v)
 
     // ---------------- 动画 ----------------
     /** fade / scale / slide_top / slide_bottom / spring */
@@ -126,12 +128,12 @@ object Prefs {
 
     var animDuration: Int
         get() = gi("anim_duration", 320)
-        set(v) = si("anim_duration", 320)
+        set(v) = si("anim_duration", v)
 
     /** 自动关闭延迟 ms，0 表示不自动关闭 */
     var dismissDelayMs: Int
         get() = gi("dismiss_delay", 4000)
-        set(v) = si("dismiss_delay", 4000)
+        set(v) = si("dismiss_delay", v)
 
     // ---------------- 保活 ----------------
     var foregroundGuard: Boolean
