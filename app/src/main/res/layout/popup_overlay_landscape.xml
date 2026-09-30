@@ -1,214 +1,244 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  横屏弹窗（参考外观：媒体区铺满 + 底部叠加详情）
+  - 媒体区铺满整张卡片：图片 / GIF 直接作为卡片背景，四个圆角由 RoundedCardLayout 统一裁剪
+  - 详情区叠在图片底部：设备名 / 连接状态 / 左右耳与充电仓电量
+  - 底部渐变压暗层保证白色文字在任意图片上都清晰可读
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/popupRoot"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:background="@drawable/bg_popup_panel"
-    android:gravity="center_vertical"
-    android:padding="10dp">
+    android:layout_height="match_parent">
 
-    <FrameLayout
-        android:id="@+id/imageWrap"
-        android:layout_width="112dp"
-        android:layout_height="76dp">
+    <com.woshiyigemanhuajia.btpopup.widget.RoundedCardLayout
+        android:id="@+id/card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/popupImage"
+        <FrameLayout
+            android:id="@+id/imageWrap"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:background="@drawable/bg_popup_image_mask"
-            android:clipToOutline="true"
-            android:contentDescription="@string/app_name" />
+            android:layout_height="match_parent">
+
+            <com.woshiyigemanhuajia.btpopup.widget.RoundedImageView
+                android:id="@+id/popupImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerCrop" />
+
+            <LinearLayout
+                android:id="@+id/noImageHint"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_popup_image_mask"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:alpha="0.7"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_image" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="未设置图片 / GIF"
+                    android:textColor="@color/popup_text_dim"
+                    android:textSize="11sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <View
+            android:id="@+id/bottomShade"
+            android:layout_width="match_parent"
+            android:layout_height="104dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_popup_fade" />
 
         <LinearLayout
-            android:id="@+id/noImageHint"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:background="@drawable/bg_popup_image_mask">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:alpha="0.7"
-                android:src="@drawable/ic_image"
-                android:contentDescription="@string/app_name" />
-        </LinearLayout>
-    </FrameLayout>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
-
-        <LinearLayout
+            android:id="@+id/detailArea"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="12dp">
 
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:src="@drawable/ic_headset"
-                android:contentDescription="@string/app_name" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_headset" />
+
+                <TextView
+                    android:id="@+id/tvDeviceName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="蓝牙耳机"
+                    android:textColor="@color/popup_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSourceTag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_popup_chip"
+                    android:paddingStart="7dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="7dp"
+                    android:paddingBottom="2dp"
+                    android:text="SYS"
+                    android:textColor="@color/popup_accent"
+                    android:textSize="9sp" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvDeviceName"
-                android:layout_width="0dp"
+                android:id="@+id/tvConnState"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
+                android:layout_marginTop="2dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="蓝牙耳机"
-                android:textColor="@color/popup_text"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvSourceTag"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_popup_chip"
-                android:paddingStart="7dp"
-                android:paddingEnd="7dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="2dp"
-                android:text="SYS"
-                android:textColor="@color/popup_accent"
-                android:textSize="9sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:background="@drawable/bg_popup_chip"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:id="@+id/tvLeftLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="左耳"
-                    style="@style/PopupLabel" />
-
-                <TextView
-                    android:id="@+id/tvLeftPercent"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="1dp"
-                    android:text="--%"
-                    style="@style/PopupPercent" />
-
-                <ProgressBar
-                    android:id="@+id/pbLeft"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="4dp"
-                    android:layout_marginTop="5dp"
-                    android:max="100"
-                    android:progress="0"
-                    android:progressDrawable="@drawable/progress_battery" />
-            </LinearLayout>
+                android:text="已连接"
+                android:textColor="@color/popup_text_dim"
+                android:textSize="10sp" />
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:background="@drawable/bg_popup_chip"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvRightLabel"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="右耳"
-                    style="@style/PopupLabel" />
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_popup_chip"
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingTop="7dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="7dp">
 
-                <TextView
-                    android:id="@+id/tvRightPercent"
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:id="@+id/tvLeftLabel"
+                        style="@style/PopupLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="左耳" />
+
+                    <TextView
+                        android:id="@+id/tvLeftPercent"
+                        style="@style/PopupPercent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="--%" />
+
+                    <ProgressBar
+                        android:id="@+id/pbLeft"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="3dp"
+                        android:layout_marginTop="4dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/progress_battery" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="1dp"
-                    android:text="--%"
-                    style="@style/PopupPercent" />
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_popup_chip"
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingTop="7dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="7dp">
 
-                <ProgressBar
-                    android:id="@+id/pbRight"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="4dp"
-                    android:layout_marginTop="5dp"
-                    android:max="100"
-                    android:progress="0"
-                    android:progressDrawable="@drawable/progress_battery" />
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/tvRightLabel"
+                        style="@style/PopupLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="右耳" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:background="@drawable/bg_popup_chip"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp">
+                    <TextView
+                        android:id="@+id/tvRightPercent"
+                        style="@style/PopupPercent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="--%" />
 
-                <TextView
-                    android:id="@+id/tvCaseLabel"
-                    android:layout_width="wrap_content"
+                    <ProgressBar
+                        android:id="@+id/pbRight"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="3dp"
+                        android:layout_marginTop="4dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/progress_battery" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="充电仓"
-                    style="@style/PopupLabel" />
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_popup_chip"
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingTop="7dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="7dp">
 
-                <TextView
-                    android:id="@+id/tvCasePercent"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="1dp"
-                    android:text="--%"
-                    style="@style/PopupPercent" />
+                    <TextView
+                        android:id="@+id/tvCaseLabel"
+                        style="@style/PopupLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="充电仓" />
 
-                <ProgressBar
-                    android:id="@+id/pbCase"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="4dp"
-                    android:layout_marginTop="5dp"
-                    android:max="100"
-                    android:progress="0"
-                    android:progressDrawable="@drawable/progress_battery" />
+                    <TextView
+                        android:id="@+id/tvCasePercent"
+                        style="@style/PopupPercent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="--%" />
+
+                    <ProgressBar
+                        android:id="@+id/pbCase"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="3dp"
+                        android:layout_marginTop="4dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/progress_battery" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvConnState"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="已连接"
-        android:textColor="@color/popup_text_dim"
-        android:textSize="10sp" />
-</LinearLayout>
+    </com.woshiyigemanhuajia.btpopup.widget.RoundedCardLayout>
+</FrameLayout>
