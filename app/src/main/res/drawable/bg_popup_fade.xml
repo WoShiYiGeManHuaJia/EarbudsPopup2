@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 横屏弹窗底部详情区的渐变压暗层：向上透明、向下加深，保证白色文字在图片上也清晰可读 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <gradient
+        android:angle="270"
+        android:endColor="#CC0B1220"
+        android:startColor="#000B1220"
+        android:type="linear" />
+</shape>
