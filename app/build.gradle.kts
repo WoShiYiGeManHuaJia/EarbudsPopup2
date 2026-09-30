@@ -11,41 +11,35 @@ android {
         applicationId = "com.woshiyigemanhuajia.btpopup"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.2.1"
         resConfigs("zh", "en")
+    }
+
+    // 统一签名配置：debug 与 release 使用同一把固定密钥，
+    // 密钥由 CI 从仓库根目录的 release.keystore 读取（见 .github/workflows/build.yml）。
+    signingConfigs {
+        val ks = file(project.parent?.projectDir ?: ".", "release.keystore")
+        if (ks.exists()) {
+            create("release") {
+                storeFile = ks
+                storePassword = "android"
+                keyAlias = "release"
+                keyPassword = "android"
+            }
+        }
     }
 
     buildTypes {
         debug {
             isMinifyEnabled = false
-            // CI 会在 build.yml 中提前生成 release.keystore（固定 debug 签名密钥）
-            val ks = file(project.parent?.projectDir ?: ".", "release.keystore")
-            if (ks.exists()) {
-                signingConfig = signingConfigs.create("release") {
-                    storeFile = ks
-                    storePassword = "android"
-                    keyAlias = "release"
-                    keyPassword = "android"
-                }
-            }
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            // CI 会在 build.yml 中提前生成 release.keystore（固定 debug 签名密钥）
-            val ks = file(project.parent?.projectDir ?: ".", "release.keystore")
-            if (ks.exists()) {
-                signingConfig = signingConfigs.create("release") {
-                    storeFile = ks
-                    storePassword = "android"
-                    keyAlias = "release"
-                    keyPassword = "android"
-                }
-            } else {
-                // 本地开发/无 keystore 时复用 debug 签名
-                signingConfig = signingConfigs.getByName("debug")
-            }
+            // 有固定密钥则用固定密钥；否则退回 debug 签名（本地无密钥时的兜底）
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
