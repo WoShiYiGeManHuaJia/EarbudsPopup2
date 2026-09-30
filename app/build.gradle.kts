@@ -20,7 +20,7 @@ android {
         debug {
             isMinifyEnabled = false
             // CI 会在 build.yml 中提前生成 release.keystore（固定 debug 签名密钥）
-            val ks = file(rootProject.projectDir, "release.keystore")
+            val ks = file(project.parent?.projectDir ?: ".", "release.keystore")
             if (ks.exists()) {
                 signingConfig = signingConfigs.create("release") {
                     storeFile = ks
@@ -34,7 +34,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             // CI 会在 build.yml 中提前生成 release.keystore（固定 debug 签名密钥）
-            val ks = file(rootProject.projectDir, "release.keystore")
+            val ks = file(project.parent?.projectDir ?: ".", "release.keystore")
             if (ks.exists()) {
                 signingConfig = signingConfigs.create("release") {
                     storeFile = ks
