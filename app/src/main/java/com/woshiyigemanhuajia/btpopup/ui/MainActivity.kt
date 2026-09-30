@@ -26,7 +26,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import coil.load
 import com.woshiyigemanhuajia.btpopup.R
 import com.woshiyigemanhuajia.btpopup.adb.AdbShell
 import com.woshiyigemanhuajia.btpopup.battery.BatteryInfo
@@ -48,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var b: ActivityMainBinding
+    private lateinit var previewStage: PopupPreviewStage
     private var loadingUi = false
     private val ui = Handler(Looper.getMainLooper())
     private val rebuildPreviewTask = Runnable { rebuildLivePreview() }
@@ -84,6 +84,8 @@ class MainActivity : AppCompatActivity() {
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
 
+        previewStage = PopupPreviewStage(this, b.previewStage)
+
         setupSliders()
         setupSwitches()
         setupButtons()
@@ -105,6 +107,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         ui.removeCallbacks(rebuildPreviewTask)
+        if (::previewStage.isInitialized) previewStage.destroy()
         try {
             Shizuku.removeBinderReceivedListener(binderReceived)
             Shizuku.removeBinderDeadListener(binderDead)
@@ -318,6 +321,7 @@ class MainActivity : AppCompatActivity() {
             refreshPreview()
         }
         b.btnQuickPreview.setOnClickListener { showTestPopup() }
+        b.btnLandscapePreview.setOnClickListener { toggleLandscapePreview() }
         b.btnAdbGrant.setOnClickListener { runOneKeyGrant() }
         b.btnCopyAdb.setOnClickListener { copyAdbScript() }
         b.btnAutoStartSetting.setOnClickListener { openAutoStartSettings() }
@@ -406,19 +410,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshPreview() {
-        val uri = Prefs.imageUri
-        if (uri.isNullOrBlank()) {
-            b.ivPreview.setImageDrawable(null)
-        } else {
-            try {
-                b.ivPreview.load(Uri.parse(uri)) { crossfade(true) }
-            } catch (t: Throwable) {
-                b.ivPreview.setImageDrawable(null)
-            }
-        }
+        if (!::previewStage.isInitialized) return
+        previewStage.setInfo(BatteryRepository.all().maxByOrNull { it.updatedAt } ?: dummyInfo())
+        previewStage.requestRender()
+        syncPreviewMode()
         // 弹窗已在屏上时，改完参数立刻重建，做到所见即所得
         ui.removeCallbacks(rebuildPreviewTask)
         ui.postDelayed(rebuildPreviewTask, 220)
+    }
+
+    /** 横屏预览入口：竖屏持机时也能看到横屏弹窗的真实样式与位置 */
+    private fun toggleLandscapePreview() {
+        val next = !previewStage.isLandscape()
+        previewStage.setLandscape(next)
+        syncPreviewMode()
+    }
+
+    /** 预览模式切换后同步按钮文案 */
+    private fun syncPreviewMode() {
+        if (!::previewStage.isInitialized) return
+        b.btnLandscapePreview.text = if (previewStage.isLandscape()) "竖屏预览" else "横屏预览"
     }
 
     private fun rebuildLivePreview() {
