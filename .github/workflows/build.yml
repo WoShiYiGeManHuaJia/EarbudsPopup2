@@ -1,4 +1,4 @@
-name: Build APK
+name: Build EarbudsPopup2 APK
 
 on:
   push:
@@ -18,14 +18,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept licenses
-        run: yes | sdkmanager --licenses || true
-
-      - name: Install SDK components
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+      - name: Show Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls "$ANDROID_SDK_ROOT/platforms" || true
+          ls "$ANDROID_SDK_ROOT/build-tools" || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -36,12 +34,13 @@ jobs:
         run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Build Release APK
-        run: gradle assembleRelease --no-daemon --stacktrace || true
+        run: gradle assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bluetooth-popup-apk
+          name: earbuds-popup2-apk
           path: |
             app/build/outputs/apk/debug/*.apk
             app/build/outputs/apk/release/*.apk
