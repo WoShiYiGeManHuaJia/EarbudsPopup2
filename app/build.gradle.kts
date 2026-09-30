@@ -3,6 +3,9 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+// 固定签名密钥库位于仓库根目录（由 CI 检出后即可用）
+val releaseKeystoreFile: File = file("${project.rootDir}/release.keystore")
+
 android {
     namespace = "com.woshiyigemanhuajia.btpopup"
     compileSdk = 35
@@ -19,10 +22,9 @@ android {
     // 统一签名配置：debug 与 release 使用同一把固定密钥，
     // 密钥由 CI 从仓库根目录的 release.keystore 读取（见 .github/workflows/build.yml）。
     signingConfigs {
-        val ks = file(project.parent?.projectDir ?: ".", "release.keystore")
-        if (ks.exists()) {
+        if (releaseKeystoreFile.exists()) {
             create("release") {
-                storeFile = ks
+                storeFile = releaseKeystoreFile
                 storePassword = "android"
                 keyAlias = "release"
                 keyPassword = "android"
