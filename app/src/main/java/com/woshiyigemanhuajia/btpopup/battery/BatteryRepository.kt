@@ -63,18 +63,14 @@ object BatteryRepository {
         return info
     }
 
-    /** 系统真实电量，读不到返回 -1 */
+    /**
+     * 系统真实电量，读不到返回 -1。
+     * BluetoothDevice#getBatteryLevel() 在不同版本上均为隐藏 API，
+     * 只能反射调用；调用失败时由广播 / GATT / HFP 等通路兜底。
+     */
     fun readSystemLevel(device: BluetoothDevice): Int {
-        if (Build.VERSION.SDK_INT >= 34) {
-            try {
-                val v = device.batteryLevel
-                if (v in 0..100) return v
-            } catch (t: Throwable) {
-                Log.w(TAG, "batteryLevel() API34 失败: " + t.message)
-            }
-        }
         try {
-            val m = BluetoothDevice::class.java.getMethod("getBatteryLevel")
+            val m = BluetoothDevice::class.java.getDeclaredMethod("getBatteryLevel")
             m.isAccessible = true
             val v = (m.invoke(device) as? Int) ?: -1
             if (v in 0..100) return v

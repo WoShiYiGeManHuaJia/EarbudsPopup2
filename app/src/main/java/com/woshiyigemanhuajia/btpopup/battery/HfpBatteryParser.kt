@@ -21,9 +21,9 @@ object HfpBatteryParser {
 
     /** 事件命令名 -> 参数 */
     fun onVendorEvent(intent: Intent): Pair<BluetoothDevice, BatteryInfo>? {
-        val device: BluetoothDevice? = try {
+        val device: BluetoothDevice = try {
             @Suppress("DEPRECATION")
-            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) as? BluetoothDevice
         } catch (t: Throwable) {
             null
         } ?: return null

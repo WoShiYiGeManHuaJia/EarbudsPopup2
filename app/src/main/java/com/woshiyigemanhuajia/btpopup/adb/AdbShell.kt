@@ -44,12 +44,28 @@ object AdbShell {
         }
     }
 
+    /** Shizuku.newProcess 属于隐藏 API，编译期不可直接访问，这里走反射。 */
+    private val newProcessMethod: java.lang.reflect.Method? by lazy {
+        try {
+            Shizuku::class.java.declaredMethods
+                .firstOrNull { it.name == "newProcess" && it.parameterTypes.size == 3 }
+                ?.also { it.isAccessible = true }
+        } catch (t: Throwable) {
+            Log.w(TAG, "查找 newProcess 失败: " + t.message)
+            null
+        }
+    }
+
     @Synchronized
     fun exec(cmd: String): Result {
         if (!binderAlive()) return Result(false, -1, "", "未连接 Stellar / Shizuku 服务")
         if (!hasPermission()) return Result(false, -1, "", "未授予 Stellar / Shizuku 权限")
         return try {
-            val p = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
+            val m = newProcessMethod
+                ?: return Result(false, -1, "", "当前 Stellar / Shizuku 版本不支持 newProcess")
+            val argv: Any = arrayOf("sh", "-c", cmd)
+            val p = m.invoke(null, argv, null, null) as? java.lang.Process
+                ?: return Result(false, -1, "", "创建 shell 进程失败")
             val out = p.inputStream.bufferedReader().use { it.readText() }
             val err = p.errorStream.bufferedReader().use { it.readText() }
             val code = p.waitFor()
