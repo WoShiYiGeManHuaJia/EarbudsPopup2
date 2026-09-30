@@ -47,7 +47,7 @@ object BatteryRepository {
 
     /** 主动拉取一次最新值（系统 API + 缓存合并） */
     fun query(context: Context, device: BluetoothDevice, fallbackName: String?): BatteryInfo {
-        val address = device.address ?: "00:00:00:00:00:00"
+        val address = addressOf(device) ?: "00:00:00:00:00:00"
         val name = fallbackName?.takeIf { it.isNotBlank() } ?: safeName(device)
         var info = cache[key(address)] ?: BatteryInfo(name, address)
         if (info.name.isBlank()) info = info.copy(name = name)
@@ -80,9 +80,18 @@ object BatteryRepository {
         return -1
     }
 
-    fun safeName(d: BluetoothDevice): String = try {
-        (d.name ?: "").takeIf { it.isNotBlank() } ?: (d.address ?: BatteryInfo.UNKNOWN_NAME)
+    /** 读设备地址（Android 12+ 需要 BLUETOOTH_CONNECT）；任何异常都返回 null，绝不外抛 */
+    fun addressOf(d: BluetoothDevice): String? = try {
+        d.address
     } catch (t: Throwable) {
-        d.address ?: BatteryInfo.UNKNOWN_NAME
+        null
+    }
+
+    fun safeName(d: BluetoothDevice): String = try {
+        (d.name ?: "").takeIf { it.isNotBlank() } ?: addressOf(d) ?: BatteryInfo.UNKNOWN_NAME
+    } catch (t: Throwable) {
+        // 兜底分支也必须安全：旧写法在 catch 里再读一次 address，权限缺失时会二次抛异常，
+        // 异常逃出蓝牙广播的 onReceive 后系统会连带回收监听服务 —— 这正是"怎么都不弹窗"的根因之一
+        addressOf(d) ?: BatteryInfo.UNKNOWN_NAME
     }
 }
