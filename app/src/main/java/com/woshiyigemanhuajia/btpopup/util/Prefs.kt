@@ -43,10 +43,30 @@ object Prefs {
         get() = gi("panel_alpha", 88)
         set(v) = si("panel_alpha", v)
 
-    /** 图片区高度 dp */
+    /** 图片区高度 dp（40 - 600） */
     var imageHeightDp: Int
         get() = gi("image_height", 176)
         set(v) = si("image_height", v)
+
+    /** 图片 / GIF 缩放模式：crop 裁剪填充 / fit 完整显示 / stretch 拉伸铺满 / center 原尺寸居中 */
+    var imageScaleMode: String
+        get() = gs("image_scale_mode", "crop") ?: "crop"
+        set(v) = ss("image_scale_mode", v)
+
+    /** 面板背景色（RGB，透明度由 panelAlpha 控制） */
+    var panelColor: Int
+        get() = gi("panel_color", 0xFF1B2436.toInt())
+        set(v) = si("panel_color", v)
+
+    /** 弹窗文字颜色（RGB） */
+    var textColor: Int
+        get() = gi("text_color", 0xFFFFFFFF.toInt())
+        set(v) = si("text_color", v)
+
+    /** 强调色：电量数字与进度条（RGB） */
+    var accentColor: Int
+        get() = gi("accent_color", 0xFF2DD4BF.toInt())
+        set(v) = si("accent_color", v)
 
     var autoPopup: Boolean
         get() = gb("auto_popup", true)

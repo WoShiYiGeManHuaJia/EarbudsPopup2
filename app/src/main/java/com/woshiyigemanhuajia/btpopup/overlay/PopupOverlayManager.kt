@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Outline
 import android.graphics.PixelFormat
+import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -13,11 +15,13 @@ import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.graphics.ColorUtils
@@ -37,11 +41,14 @@ object PopupOverlayManager {
     private val main = Handler(Looper.getMainLooper())
 
     private var rootView: View? = null
-    private var windowManager: WindowManager? = null
+    private var rootWindowManager: WindowManager? = null
     private var layoutParams: WindowManager.LayoutParams? = null
     private var dismissTask: Runnable? = null
     private var currentAddress: String? = null
     private var lastShowAt = 0L
+
+    /** 外观参数签名：参数一旦变化即重建弹窗，保证改完参数预览立刻生效 */
+    private var lastSignature: String? = null
 
     fun isShowing(): Boolean = rootView != null
 
@@ -71,29 +78,25 @@ object PopupOverlayManager {
 
     private fun showInternal(context: Context, info: BatteryInfo, imageUri: String?) {
         val now = System.currentTimeMillis()
-        val sameDevice = currentAddress != null && currentAddress.equals(info.address, ignoreCase = true)
+        val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val signature = buildSignature(info, imageUri, landscape)
 
-        if (rootView != null && sameDevice) {
+        // 外观参数完全一致时才复用现有弹窗，否则重建，保证改完参数预览立即生效
+        if (rootView != null && signature == lastSignature) {
             bindData(rootView!!, info)
             restartDismissTimer()
             return
         }
-        if (now - lastShowAt < 1200) {
-            // 极短时间内重复事件，直接刷新
-            rootView?.let { bindData(it, info); restartDismissTimer() }
+        if (rootView == null && now - lastShowAt < 600) {
+            // 极短时间内重复事件，忽略
             return
         }
 
         removeInternal(false)
 
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
-        val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val layoutId = if (landscape) R.layout.popup_overlay_landscape else R.layout.popup_overlay_portrait
         val view = LayoutInflater.from(context).inflate(layoutId, null)
-
-        bindData(view, info)
-        applyImage(context, view, imageUri)
-        applyPanelStyle(view)
 
         val metrics = context.resources.displayMetrics
         val density = metrics.density
@@ -102,22 +105,30 @@ object PopupOverlayManager {
 
         val marginPx = if (landscape) (Prefs.landMarginDp * density).toInt() else (8 * density).toInt()
         val ratio = if (landscape) Prefs.landWidthPercent else Prefs.widthPercent
-        var widthPx = (screenW * ratio / 100f).toInt()
-        widthPx = widthPx.coerceAtMost(screenW - marginPx * 2).coerceAtLeast((220 * density).toInt())
+        val minW = (200 * density).toInt().coerceAtMost(screenW)
+        val maxW = (screenW - marginPx * 2).coerceAtLeast(minW)
+        val widthPx = (screenW * ratio / 100f).toInt().coerceIn(minW, maxW)
 
         val fixedHeight = if (landscape) Prefs.landHeightFixed else Prefs.heightFixed
         val heightDp = if (landscape) Prefs.landHeightDp else Prefs.heightDp
+        val fixedHeightPx = (heightDp * density).toInt().coerceAtLeast(minW / 2)
 
-        // 预测量，便于计算居中位置
+        // 先套用最终样式（含图片区尺寸），再测量，避免"拉宽/拉高后出现空白"
+        bindData(view, info)
+        applyImage(context, view, imageUri)
+        applyPanelStyle(view, landscape, fixedHeight)
+
         val widthSpec = View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY)
         val heightSpec = if (fixedHeight) {
-            View.MeasureSpec.makeMeasureSpec((heightDp * density).toInt(), View.MeasureSpec.EXACTLY)
+            View.MeasureSpec.makeMeasureSpec(fixedHeightPx, View.MeasureSpec.EXACTLY)
         } else {
             View.MeasureSpec.makeMeasureSpec(screenH, View.MeasureSpec.AT_MOST)
         }
         view.measure(widthSpec, heightSpec)
-        val measuredH = view.measuredHeight.coerceAtLeast((72 * density).toInt())
-        val finalH = if (fixedHeight) (heightDp * density).toInt() else measuredH
+
+        val minH = (96 * density).toInt().coerceAtMost(screenH)
+        val measuredH = view.measuredHeight.coerceIn(minH, screenH)
+        val finalH = if (fixedHeight) fixedHeightPx else measuredH
 
         var x = (screenW * Prefs.posXPercent / 100f - widthPx / 2f).toInt()
         var y = (screenH * Prefs.posYPercent / 100f - finalH / 2f).toInt()
@@ -150,28 +161,79 @@ object PopupOverlayManager {
         }
 
         rootView = view
-        windowManager = wm
+        rootWindowManager = wm
         layoutParams = lp
         currentAddress = info.address
         lastShowAt = now
+        lastSignature = signature
 
         playEnter(view)
         restartDismissTimer()
     }
 
+    /** 外观参数签名：任一参数变化都触发重建，避免"改了参数但预览没变化" */
+    private fun buildSignature(info: BatteryInfo, imageUri: String?, landscape: Boolean): String {
+        return listOf(
+            info.address, imageUri ?: "", landscape.toString(),
+            Prefs.widthPercent, Prefs.heightFixed, Prefs.heightDp,
+            Prefs.landWidthPercent, Prefs.landHeightFixed, Prefs.landHeightDp, Prefs.landMarginDp,
+            Prefs.posXPercent, Prefs.posYPercent, Prefs.cornerRadiusDp,
+            Prefs.panelAlpha, Prefs.panelColor, Prefs.textColor, Prefs.accentColor,
+            Prefs.imageHeightDp, Prefs.imageScaleMode, Prefs.animType, Prefs.animDuration
+        ).joinToString("|")
+    }
+
     private fun removeInternal(animate: Boolean) {
         val v = rootView ?: return
+        val wm = rootWindowManager
         cancelDismissTimer()
         rootView = null
-        currentAddress = null
+        rootWindowManager = null
         layoutParams = null
-        playExit(v, animate) {
-            try {
-                windowManager?.removeView(v)
-            } catch (t: Throwable) {
-                Log.w(TAG, "removeView 失败: " + t.message)
+        currentAddress = null
+        lastSignature = null
+
+        if (!animate) {
+            forceRemove(v, wm)
+            return
+        }
+
+        var finished = false
+        val finish = Runnable {
+            if (finished) return@Runnable
+            finished = true
+            forceRemove(v, wm)
+        }
+        val duration = (Prefs.animDuration.toLong().coerceIn(80L, 1500L)) * 3 / 4
+        try {
+            v.animate().alpha(0f).scaleX(0.94f).scaleY(0.94f).setDuration(duration)
+                .setInterpolator(DecelerateInterpolator())
+                .withEndAction { main.post(finish) }
+                .start()
+        } catch (t: Throwable) {
+            Log.w(TAG, "退场动画失败: " + t.message)
+            finish.run()
+            return
+        }
+        // 兜底：动画回调一旦失效（被取消 / 窗口状态异常），超时后也强制摘除窗口，
+        // 避免残留一层无法点击的透明层，导致必须去关悬浮窗权限才能恢复
+        main.postDelayed(finish, duration + 350L)
+    }
+
+    /** 幂等地把窗口从 WindowManager 上摘除，任何情况下都保证不留残影 */
+    private fun forceRemove(view: View, wm: WindowManager?) {
+        try {
+            view.animate().cancel()
+        } catch (t: Throwable) {
+            Log.w(TAG, "取消动画失败: " + t.message)
+        }
+        try {
+            val manager = wm ?: (view.context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)
+            if (manager != null && (view.parent != null || view.isAttachedToWindow)) {
+                manager.removeViewImmediate(view)
             }
-            windowManager = null
+        } catch (t: Throwable) {
+            Log.w(TAG, "removeView 失败: " + t.message)
         }
     }
 
@@ -249,6 +311,13 @@ object PopupOverlayManager {
             }
         }
         image.clipToOutline = true
+        // 图片 / GIF 缩放模式可调，解决"只能调一点点大小"的观感问题
+        image.scaleType = when (Prefs.imageScaleMode) {
+            "fit" -> ImageView.ScaleType.FIT_CENTER
+            "stretch" -> ImageView.ScaleType.FIT_XY
+            "center" -> ImageView.ScaleType.CENTER
+            else -> ImageView.ScaleType.CENTER_CROP
+        }
 
         if (imageUri.isNullOrBlank()) {
             hint?.visibility = View.VISIBLE
@@ -266,33 +335,45 @@ object PopupOverlayManager {
         }
     }
 
-    private fun applyPanelStyle(view: View) {
+    private fun applyPanelStyle(view: View, landscape: Boolean, fixedHeight: Boolean) {
         val density = view.context.resources.displayMetrics.density
-        val radiusPx = Prefs.cornerRadiusDp * density
+
+        // 面板背景：颜色 + 圆角 + 不透明度（颜色从此可自定义）
         val bg = view.background?.mutate() as? GradientDrawable
         if (bg != null) {
-            bg.cornerRadius = radiusPx
-            val cs = bg.color
-            if (cs != null) {
-                val alpha = (Prefs.panelAlpha.coerceIn(10, 100) * 255 / 100).coerceIn(26, 255)
-                bg.setColor(ColorUtils.setAlphaComponent(cs.defaultColor, alpha))
-            }
+            bg.cornerRadius = Prefs.cornerRadiusDp.coerceIn(0, 200) * density
+            val alpha = (Prefs.panelAlpha.coerceIn(0, 100) * 255 / 100).coerceIn(0, 255)
+            bg.setColor(ColorUtils.setAlphaComponent(Prefs.panelColor or (0xFF shl 24), alpha))
             view.background = bg
         }
 
-        view.findViewById<View>(R.id.imageWrap)?.let { wrap ->
-            val ratio = Prefs.imageHeightDp / 100f
-            val lp = wrap.layoutParams
-            if (lp != null) {
-                val density2 = view.context.resources.displayMetrics.density
-                lp.height = if (view.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    (76 * density2).toInt()
-                } else {
-                    (140 * ratio).toInt().coerceIn((80 * density2).toInt(), (280 * density2).toInt())
+        // 图片区尺寸：高度按 dp 精确生效，不再被旧公式压缩成几十 dp
+        val wrap = view.findViewById<View>(R.id.imageWrap)
+        (wrap?.layoutParams as? LinearLayout.LayoutParams)?.let { lp ->
+            val targetDp = Prefs.imageHeightDp.coerceIn(40, 600)
+            when {
+                landscape -> {
+                    val h = (targetDp * 0.55f).toInt().coerceIn(40, 220)
+                    lp.width = (h * 1.5f * density).toInt()
+                    lp.height = (h * density).toInt()
+                    lp.weight = 0f
                 }
-                wrap.layoutParams = lp
+                fixedHeight -> {
+                    // 固定高度时让图片区吃掉剩余空间，杜绝底部莫名空白
+                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    lp.height = 0
+                    lp.weight = 1f
+                }
+                else -> {
+                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                    lp.height = (targetDp * density).toInt()
+                    lp.weight = 0f
+                }
             }
+            wrap.layoutParams = lp
         }
+
+        applyColors(view)
     }
 
     // ------------------------------------------------------------------ 动画
@@ -337,15 +418,59 @@ object PopupOverlayManager {
         }
     }
 
-    private fun playExit(view: View, animate: Boolean, end: () -> Unit) {
-        if (!animate) {
-            end()
-            return
+    // ------------------------------------------------------------------ 配色
+
+    private fun applyColors(view: View) {
+        val text = Prefs.textColor or (0xFF shl 24)
+        val accent = Prefs.accentColor or (0xFF shl 24)
+
+        view.findViewById<TextView>(R.id.tvDeviceName)?.setTextColor(text)
+        view.findViewById<TextView>(R.id.tvConnState)?.setTextColor(ColorUtils.setAlphaComponent(text, 180))
+        view.findViewById<TextView>(R.id.tvSourceTag)?.setTextColor(accent)
+
+        intArrayOf(R.id.tvLeftLabel, R.id.tvRightLabel, R.id.tvCaseLabel).forEach { id ->
+            view.findViewById<TextView>(id)?.setTextColor(ColorUtils.setAlphaComponent(text, 190))
         }
-        val duration = (Prefs.animDuration.toLong().coerceIn(80L, 1500L)) * 3 / 4
-        view.animate().alpha(0f).scaleX(0.94f).scaleY(0.94f).setDuration(duration)
-            .setInterpolator(DecelerateInterpolator())
-            .withEndAction { end() }
-            .start()
+        intArrayOf(R.id.tvLeftPercent, R.id.tvRightPercent, R.id.tvCasePercent).forEach { id ->
+            view.findViewById<TextView>(id)?.setTextColor(accent)
+        }
+        intArrayOf(R.id.pbLeft, R.id.pbRight, R.id.pbCase).forEach { id ->
+            view.findViewById<ProgressBar>(id)?.let { paintProgressBar(it, accent) }
+        }
+
+        // 未设置图片 / GIF 时的占位提示
+        (view.findViewById<View>(R.id.noImageHint) as? ViewGroup)?.let { group ->
+            for (i in 0 until group.childCount) {
+                when (val child = group.getChildAt(i)) {
+                    is TextView -> child.setTextColor(ColorUtils.setAlphaComponent(text, 140))
+                    is ImageView -> child.alpha = 0.62f
+                }
+            }
+        }
+    }
+
+    /** 用自定义强调色重建进度条前景，避免直接 tint 把轨道一起染色 */
+    private fun paintProgressBar(bar: ProgressBar, accent: Int) {
+        try {
+            val track = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 999f
+                setColor(ColorUtils.setAlphaComponent(0xFFFFFFFF.toInt(), 51))
+            }
+            val fill = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 999f
+                orientation = GradientDrawable.Orientation.LEFT_RIGHT
+                colors = intArrayOf(accent, ColorUtils.setAlphaComponent(accent, 165))
+            }
+            val clip = ClipDrawable(fill, Gravity.START, ClipDrawable.HORIZONTAL)
+            val layer = LayerDrawable(arrayOf(track, clip))
+            layer.setId(0, android.R.id.background)
+            layer.setId(1, android.R.id.progress)
+            bar.progressDrawable = layer
+            bar.progressTintList = null
+        } catch (t: Throwable) {
+            Log.w(TAG, "进度条染色失败: " + t.message)
+        }
     }
 }

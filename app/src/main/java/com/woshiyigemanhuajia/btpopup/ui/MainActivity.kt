@@ -8,9 +8,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import android.view.Gravity
@@ -46,6 +49,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityMainBinding
     private var loadingUi = false
+    private val ui = Handler(Looper.getMainLooper())
+    private val rebuildPreviewTask = Runnable { rebuildLivePreview() }
 
     private val binderReceived = object : Shizuku.OnBinderReceivedListener {
         override fun onBinderReceived() {
@@ -99,6 +104,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        ui.removeCallbacks(rebuildPreviewTask)
         try {
             Shizuku.removeBinderReceivedListener(binderReceived)
             Shizuku.removeBinderDeadListener(binderDead)
@@ -112,16 +118,16 @@ class MainActivity : AppCompatActivity() {
     // ------------------------------------------------------------------ 滑块
 
     private fun setupSliders() {
-        setupSeek(b.sbAlpha, b.tvAlphaVal, 20, 100,
+        setupSeek(b.sbAlpha, b.tvAlphaVal, 0, 100,
             { Prefs.panelAlpha }, { Prefs.panelAlpha = it }) { "$it%" }
 
-        setupSeek(b.sbImageHeight, b.tvImageHeightVal, 100, 300,
+        setupSeek(b.sbImageHeight, b.tvImageHeightVal, 40, 600,
             { Prefs.imageHeightDp }, { Prefs.imageHeightDp = it }) { "${it}dp" }
 
-        setupSeek(b.sbWidth, b.tvWidthVal, 40, 100,
+        setupSeek(b.sbWidth, b.tvWidthVal, 20, 100,
             { Prefs.widthPercent }, { Prefs.widthPercent = it }) { "$it%" }
 
-        setupSeek(b.sbHeight, b.tvHeightVal, 0, 800,
+        setupSeek(b.sbHeight, b.tvHeightVal, 0, 1200,
             { if (Prefs.heightFixed) Prefs.heightDp else 0 },
             { v ->
                 Prefs.heightFixed = v > 0
@@ -134,29 +140,32 @@ class MainActivity : AppCompatActivity() {
         setupSeek(b.sbPosY, b.tvPosYVal, 0, 100,
             { Prefs.posYPercent }, { Prefs.posYPercent = it }) { posLabel(it) }
 
-        setupSeek(b.sbRadius, b.tvRadiusVal, 0, 80,
+        setupSeek(b.sbRadius, b.tvRadiusVal, 0, 200,
             { Prefs.cornerRadiusDp }, { Prefs.cornerRadiusDp = it }) { "${it}dp" }
 
-        setupSeek(b.sbLandWidth, b.tvLandWidthVal, 40, 100,
+        setupSeek(b.sbLandWidth, b.tvLandWidthVal, 20, 100,
             { Prefs.landWidthPercent }, { Prefs.landWidthPercent = it }) { "$it%" }
 
-        setupSeek(b.sbLandHeight, b.tvLandHeightVal, 0, 400,
+        setupSeek(b.sbLandHeight, b.tvLandHeightVal, 0, 800,
             { if (Prefs.landHeightFixed) Prefs.landHeightDp else 0 },
             { v ->
                 Prefs.landHeightFixed = v > 0
                 if (v > 0) Prefs.landHeightDp = if (v < 80) 80 else v
             }) { if (it <= 0) "自动" else "${it}dp" }
 
-        setupSeek(b.sbLandMargin, b.tvLandMarginVal, 0, 80,
+        setupSeek(b.sbLandMargin, b.tvLandMarginVal, 0, 120,
             { Prefs.landMarginDp }, { Prefs.landMarginDp = it }) { "${it}dp" }
 
-        setupSeek(b.sbAnimDuration, b.tvAnimDurationVal, 80, 1200,
+        setupSeek(b.sbAnimDuration, b.tvAnimDurationVal, 60, 1500,
             { Prefs.animDuration }, { Prefs.animDuration = it }) { "${it}ms" }
 
-        setupSeek(b.sbDismissDelay, b.tvDismissDelayVal, 0, 60,
+        setupSeek(b.sbDismissDelay, b.tvDismissDelayVal, 0, 120,
             { Prefs.dismissDelayMs / 1000 }, { Prefs.dismissDelayMs = it * 1000 }) {
             if (it <= 0) "不自动关闭" else "${it}s"
         }
+
+        setupImageScale()
+        setupColorButtons()
     }
 
     private fun posLabel(v: Int): String = when {
@@ -192,21 +201,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun syncFromPrefs() {
         loadingUi = true
-        setSeekValue(b.sbAlpha, b.tvAlphaVal, 20, Prefs.panelAlpha) { "$it%" }
-        setSeekValue(b.sbImageHeight, b.tvImageHeightVal, 100, Prefs.imageHeightDp) { "${it}dp" }
-        setSeekValue(b.sbWidth, b.tvWidthVal, 40, Prefs.widthPercent) { "$it%" }
+        setSeekValue(b.sbAlpha, b.tvAlphaVal, 0, Prefs.panelAlpha) { "$it%" }
+        setSeekValue(b.sbImageHeight, b.tvImageHeightVal, 40, Prefs.imageHeightDp) { "${it}dp" }
+        setSeekValue(b.sbWidth, b.tvWidthVal, 20, Prefs.widthPercent) { "$it%" }
         setSeekValue(b.sbHeight, b.tvHeightVal, 0, if (Prefs.heightFixed) Prefs.heightDp else 0) {
             if (it <= 0) "自动" else "${it}dp"
         }
         setSeekValue(b.sbPosX, b.tvPosXVal, 0, Prefs.posXPercent) { posLabel(it) }
         setSeekValue(b.sbPosY, b.tvPosYVal, 0, Prefs.posYPercent) { posLabel(it) }
         setSeekValue(b.sbRadius, b.tvRadiusVal, 0, Prefs.cornerRadiusDp) { "${it}dp" }
-        setSeekValue(b.sbLandWidth, b.tvLandWidthVal, 40, Prefs.landWidthPercent) { "$it%" }
+        setSeekValue(b.sbLandWidth, b.tvLandWidthVal, 20, Prefs.landWidthPercent) { "$it%" }
         setSeekValue(b.sbLandHeight, b.tvLandHeightVal, 0, if (Prefs.landHeightFixed) Prefs.landHeightDp else 0) {
             if (it <= 0) "自动" else "${it}dp"
         }
         setSeekValue(b.sbLandMargin, b.tvLandMarginVal, 0, Prefs.landMarginDp) { "${it}dp" }
-        setSeekValue(b.sbAnimDuration, b.tvAnimDurationVal, 80, Prefs.animDuration) { "${it}ms" }
+        setSeekValue(b.sbAnimDuration, b.tvAnimDurationVal, 60, Prefs.animDuration) { "${it}ms" }
         setSeekValue(b.sbDismissDelay, b.tvDismissDelayVal, 0, Prefs.dismissDelayMs / 1000) {
             if (it <= 0) "不自动关闭" else "${it}s"
         }
@@ -224,6 +233,14 @@ class MainActivity : AppCompatActivity() {
             "slide_bottom" -> b.chipSlideBottom.isChecked = true
             else -> b.chipSpring.isChecked = true
         }
+
+        when (Prefs.imageScaleMode) {
+            "fit" -> b.chipScaleFit.isChecked = true
+            "stretch" -> b.chipScaleStretch.isChecked = true
+            "center" -> b.chipScaleCenter.isChecked = true
+            else -> b.chipScaleCrop.isChecked = true
+        }
+        refreshColorSwatches()
         loadingUi = false
     }
 
@@ -300,10 +317,63 @@ class MainActivity : AppCompatActivity() {
             Prefs.imageUri = null
             refreshPreview()
         }
-        b.btnTestPopup.setOnClickListener { showTestPopup() }
+        b.btnQuickPreview.setOnClickListener { showTestPopup() }
         b.btnAdbGrant.setOnClickListener { runOneKeyGrant() }
         b.btnCopyAdb.setOnClickListener { copyAdbScript() }
         b.btnAutoStartSetting.setOnClickListener { openAutoStartSettings() }
+    }
+
+    private fun setupImageScale() {
+        b.cgImageScale.setOnCheckedStateChangeListener { _, checkedIds ->
+            if (loadingUi) return@setOnCheckedStateChangeListener
+            Prefs.imageScaleMode = when (checkedIds.firstOrNull()) {
+                R.id.chipScaleFit -> "fit"
+                R.id.chipScaleStretch -> "stretch"
+                R.id.chipScaleCenter -> "center"
+                else -> "crop"
+            }
+            refreshPreview()
+        }
+    }
+
+    private fun setupColorButtons() {
+        b.btnPanelColor.setOnClickListener {
+            pickColor("面板底色", Prefs.panelColor) { Prefs.panelColor = it }
+        }
+        b.btnTextColor.setOnClickListener {
+            pickColor("文字颜色", Prefs.textColor) { Prefs.textColor = it }
+        }
+        b.btnAccentColor.setOnClickListener {
+            pickColor("强调颜色", Prefs.accentColor) { Prefs.accentColor = it }
+        }
+    }
+
+    private fun pickColor(title: String, current: Int, apply: (Int) -> Unit) {
+        ColorPickerDialog(this, title, current) { picked ->
+            apply(picked)
+            refreshColorSwatches()
+            refreshPreview()
+        }.show()
+    }
+
+    private fun refreshColorSwatches() {
+        paintSwatch(b.btnPanelColor, Prefs.panelColor)
+        paintSwatch(b.btnTextColor, Prefs.textColor)
+        paintSwatch(b.btnAccentColor, Prefs.accentColor)
+    }
+
+    private fun paintSwatch(view: TextView, color: Int) {
+        val bg = ContextCompat.getDrawable(this, R.drawable.bg_color_swatch)?.mutate() as? GradientDrawable
+            ?: GradientDrawable().apply { cornerRadius = dp(10).toFloat() }
+        bg.setColor(color)
+        bg.setStroke(dp(1), if (isColorDark(color)) 0x33FFFFFF else 0x33000000)
+        view.background = bg
+        view.setTextColor(if (isColorDark(color)) Color.WHITE else 0xFF0F172A.toInt())
+    }
+
+    private fun isColorDark(color: Int): Boolean {
+        val luminance = 0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)
+        return luminance < 140
     }
 
     private fun pickImage() {
@@ -339,14 +409,26 @@ class MainActivity : AppCompatActivity() {
         val uri = Prefs.imageUri
         if (uri.isNullOrBlank()) {
             b.ivPreview.setImageDrawable(null)
-            return
+        } else {
+            try {
+                b.ivPreview.load(Uri.parse(uri)) { crossfade(true) }
+            } catch (t: Throwable) {
+                b.ivPreview.setImageDrawable(null)
+            }
         }
-        try {
-            b.ivPreview.load(Uri.parse(uri)) { crossfade(true) }
-        } catch (t: Throwable) {
-            b.ivPreview.setImageDrawable(null)
-        }
+        // 弹窗已在屏上时，改完参数立刻重建，做到所见即所得
+        ui.removeCallbacks(rebuildPreviewTask)
+        ui.postDelayed(rebuildPreviewTask, 220)
     }
+
+    private fun rebuildLivePreview() {
+        if (!PopupOverlayManager.isShowing()) return
+        if (!Settings.canDrawOverlays(this)) return
+        PopupOverlayManager.show(this, BatteryRepository.all().maxByOrNull { it.updatedAt } ?: dummyInfo(), Prefs.imageUri)
+    }
+
+    private fun dummyInfo(): BatteryInfo =
+        BatteryInfo("测试耳机", "00:11:22:33:44:55", 88, 76, 54, 88, false, "预览数据")
 
     private fun showTestPopup() {
         if (!Settings.canDrawOverlays(this)) {
@@ -354,8 +436,7 @@ class MainActivity : AppCompatActivity() {
             requestOverlayPermission()
             return
         }
-        val info = BatteryRepository.all().maxByOrNull { it.updatedAt }
-            ?: BatteryInfo("测试耳机", "00:11:22:33:44:55", 88, 76, 54, 88, false, "预览数据")
+        val info = BatteryRepository.all().maxByOrNull { it.updatedAt } ?: dummyInfo()
         PopupOverlayManager.show(this, info, Prefs.imageUri)
     }
 
