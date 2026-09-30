@@ -43,6 +43,9 @@ class BluetoothMonitorService : Service() {
         const val ACTION_START = "com.woshiyigemanhuajia.btpopup.START_MONITOR"
         const val ACTION_STOP = "com.woshiyigemanhuajia.btpopup.STOP_MONITOR"
 
+        /** 读不到蓝牙地址时的占位 key：宁可少一次去重，也不能因为读地址失败而不弹窗 */
+        private const val FALLBACK_ADDRESS = "00:00:00:00:00:00"
+
         fun start(context: Context) {
             val i = Intent(context, BluetoothMonitorService::class.java).setAction(ACTION_START)
             try {
@@ -247,22 +250,42 @@ class BluetoothMonitorService : Service() {
         null
     }
 
+    /** Android 12+ 读 device.address 需要 BLUETOOTH_CONNECT；读不到也绝不能因此把弹窗丢掉 */
+    private fun addressOf(device: BluetoothDevice): String? = try {
+        device.address
+    } catch (t: Throwable) {
+        Log.w(TAG, "读取蓝牙地址失败: " + t.message)
+        null
+    }
+
     private fun onConnected(device: BluetoothDevice) {
         if (!Prefs.autoPopup) return
-        val address = device.address ?: return
+        val address = addressOf(device) ?: FALLBACK_ADDRESS
         val now = System.currentTimeMillis()
         if (address == lastDeviceAddress && now - lastTriggerAt < 3000) return
         lastDeviceAddress = address
         lastTriggerAt = now
 
-        val name = BatteryRepository.safeName(device)
-        val info = BatteryRepository.query(this, device, name)
-        PopupOverlayManager.show(this, info, Prefs.imageUri)
+        // 电量 / 设备名只是"锦上添花"：任何读取失败（权限、机型差异）都不允许挡住弹窗本身
+        var name = ""
+        var info: BatteryInfo? = null
+        try {
+            name = BatteryRepository.safeName(device)
+            info = BatteryRepository.query(this, device, name)
+        } catch (t: Throwable) {
+            Log.e(TAG, "读取耳机信息失败: " + t.message)
+        }
+        Log.i(TAG, "检测到耳机连接，准备弹出弹窗: " + name.ifBlank { address })
+        PopupOverlayManager.show(
+            this,
+            info ?: BatteryRepository.update(address, name) { it },
+            Prefs.imageUri
+        )
         scheduleRefresh(device, name)
     }
 
     private fun onDisconnected(device: BluetoothDevice) {
-        val address = device.address ?: return
+        val address = addressOf(device) ?: FALLBACK_ADDRESS
         BatteryRepository.remove(address)
         if (address.equals(lastDeviceAddress, true)) {
             PopupOverlayManager.dismiss()
@@ -277,7 +300,7 @@ class BluetoothMonitorService : Service() {
             BatteryRepository.readSystemLevel(device)
         }
         val name = BatteryRepository.safeName(device)
-        val info = BatteryRepository.update(device.address ?: return, name) { cur ->
+        val info = BatteryRepository.update(addressOf(device) ?: FALLBACK_ADDRESS, name) { cur ->
             cur.copy(
                 overall = if (level in 0..100) level else cur.overall,
                 source = if (cur.source.isBlank()) "系统蓝牙服务" else cur.source,
@@ -292,7 +315,7 @@ class BluetoothMonitorService : Service() {
     /** 连接瞬间系统电量可能还没上报，做几次异步补偿刷新 */
     private fun scheduleRefresh(device: BluetoothDevice, name: String) {
         clearRefreshTasks()
-        val address = device.address ?: return
+        val address = addressOf(device) ?: FALLBACK_ADDRESS
         val delays = longArrayOf(600L, 1500L, 3000L, 5000L)
         delays.forEach { delay ->
             val task = Runnable {
