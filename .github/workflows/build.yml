@@ -12,6 +12,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Generate fixed debug keystore for consistent signing
+        run: |
+          keytool -genkeypair -v \
+            -dname "CN=EarbudsPopup2, OU=Dev, O=WoshiYiGeManHuaJia, L=China, ST=Guangdong, C=CN" \
+            -keystore release.keystore \
+            -storepass android \
+            -keypass android \
+            -alias release \
+            -keyalg RSA -keysize 2048 -validity 10000
+          echo "Generated: $(ls -la release.keystore)"
+          echo "SHA1: $(keytool -list -v -keystore release.keystore -storepass android -alias release 2>/dev/null | grep SHA1)"
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
