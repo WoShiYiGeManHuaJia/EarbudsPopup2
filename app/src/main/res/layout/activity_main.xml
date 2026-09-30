@@ -227,6 +227,17 @@
                     android:text="@string/sec_appearance" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLandscapePreview"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_marginEnd="8dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="34dp"
+                    android:minWidth="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="横屏预览" />
+                                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnQuickPreview"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="wrap_content"
@@ -238,14 +249,19 @@
                     android:text="立即预览" />
             </LinearLayout>
 
-            <ImageView
-                android:id="@+id/ivPreview"
+            <FrameLayout
+                android:id="@+id/previewStage"
                 android:layout_width="match_parent"
-                android:layout_height="132dp"
+                android:layout_height="212dp"
                 android:layout_marginTop="10dp"
-                android:background="@drawable/bg_preview_area"
-                android:contentDescription="@string/app_name"
-                android:scaleType="centerCrop" />
+                android:background="@drawable/bg_preview_area" />
+
+            <TextView
+                style="@style/CardHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="实时预览：与真机悬浮窗共用同一套布局与样式，拖动下方任意滑块即时生效" />
 
             <TextView
                 style="@style/CardHint"
