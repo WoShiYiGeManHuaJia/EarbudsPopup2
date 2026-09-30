@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.BtPopup" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_teal</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">@color/brand_cyan</item>
+        <item name="colorSurface">#141C2B</item>
+        <item name="android:colorBackground">#0B1220</item>
+        <item name="colorOnSurface">#E8EEF8</item>
+        <item name="android:statusBarColor">#0B1220</item>
+        <item name="android:navigationBarColor">#0B1220</item>
+    </style>
+</resources>

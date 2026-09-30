@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_teal">#14B8A6</color>
+    <color name="brand_teal_dark">#0D9488</color>
+    <color name="brand_cyan">#06B6D4</color>
+    <color name="brand_blue">#0EA5E9</color>
+    <color name="brand_indigo">#4F46E5</color>
+
+    <color name="bg_page">#F4F7FB</color>
+    <color name="bg_card">#FFFFFF</color>
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#5B6B84</color>
+    <color name="text_tertiary">#93A0B5</color>
+    <color name="divider">#E6ECF4</color>
+
+    <color name="ok_green">#10B981</color>
+    <color name="warn_amber">#F59E0B</color>
+    <color name="err_red">#EF4444</color>
+
+    <color name="popup_panel">#E6121826</color>
+    <color name="popup_panel_stroke">#33FFFFFF</color>
+    <color name="popup_text">#FFFFFF</color>
+    <color name="popup_text_dim">#B8C4D9</color>
+    <color name="popup_chip">#1FFFFFFF</color>
+    <color name="popup_accent">#2DD4BF</color>
+    <color name="status_off">#B9C4D4</color>
+</resources>

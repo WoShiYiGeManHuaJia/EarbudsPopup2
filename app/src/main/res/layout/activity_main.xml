@@ -1,0 +1,928 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="28dp">
+
+        <!-- ================= 顶部标题 ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_header_gradient"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_headset" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/app_name"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/app_subtitle"
+                        android:textColor="#CCFBF1"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_pill"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="9dp"
+                android:paddingBottom="9dp">
+
+                <TextView
+                    android:id="@+id/dotStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="●"
+                    android:textColor="@color/status_off"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tvServiceStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="监听服务未启动"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ================= 运行状态 ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_status" />
+
+            <TextView
+                android:id="@+id/tvLiveDevice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="当前未连接蓝牙音频设备"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="左耳"
+                        android:textColor="@color/text_tertiary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tvLiveLeft"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textColor="@color/brand_teal_dark"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="右耳"
+                        android:textColor="@color/text_tertiary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tvLiveRight"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textColor="@color/brand_teal_dark"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="充电仓"
+                        android:textColor="@color/text_tertiary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tvLiveCase"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textColor="@color/brand_teal_dark"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvBatterySource"
+                style="@style/CardHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="数据来源：等待耳机连接" />
+        </LinearLayout>
+
+        <!-- ================= 弹窗外观 ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_appearance" />
+
+            <ImageView
+                android:id="@+id/ivPreview"
+                android:layout_width="match_parent"
+                android:layout_height="132dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_preview_area"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                style="@style/CardHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="支持静态图片与 GIF 动图，建议使用透明背景的二次元立绘" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickImage"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/pick_image" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnClearImage"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/clear_image" />
+            </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="图片高度"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbImageHeight"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="200"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvImageHeightVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="176dp"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="面板不透明度"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbAlpha"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="80"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvAlphaVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="88%"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="圆角半径"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbRadius"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="80"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvRadiusVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="28dp"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+        </LinearLayout>
+
+        <!-- ================= 尺寸与位置 ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_layout" />
+
+            <TextView
+                style="@style/CardHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="竖屏弹窗（默认形态）" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="宽度"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbWidth"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="60"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvWidthVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="84%"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="高度"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbHeight"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="800"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvHeightVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="自动"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="水平位置"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbPosX"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvPosXVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="居中 50%"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="垂直位置"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbPosY"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvPosYVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="居中 50%"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="14dp"
+                android:background="@color/divider" />
+
+            <TextView
+                style="@style/CardHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="横屏弹窗（更扁更长、远离边缘）" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="宽度"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbLandWidth"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="60"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvLandWidthVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="64%"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="高度"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbLandHeight"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="400"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvLandHeightVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="自动"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="边缘留白"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbLandMargin"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="80"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvLandMarginVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="28dp"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+        </LinearLayout>
+
+        <!-- ================= 动画 ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_animation" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cgAnimType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:selectionRequired="true"
+                app:singleLine="false"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSpring"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="回弹" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFade"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="淡入淡出" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipScale"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="缩放" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSlideTop"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="顶部滑入" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSlideBottom"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="底部滑入" />
+            </com.google.android.material.chip.ChipGroup>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="时长"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbAnimDuration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="1120"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvAnimDurationVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="320ms"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="76dp"
+                android:layout_height="wrap_content"
+                android:text="自动关闭"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/sbDismissDelay"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="60"
+                android:progressTint="@color/brand_teal"
+                android:thumbTint="@color/brand_teal" />
+
+            <TextView
+                android:id="@+id/tvDismissDelayVal"
+                android:layout_width="66dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="4s"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+        </LinearLayout>
+
+        <!-- ================= 权限与 ADB 授权 ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_permission" />
+
+            <LinearLayout
+                android:id="@+id/permContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/tvShizukuState"
+                style="@style/CardHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Stellar / Shizuku：检测中" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAdbGrant"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/one_key_adb" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCopyAdb"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/copy_adb" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/CardHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="一键授权依赖 Stellar / Shizuku 提供的 ADB 权限；若未连接，可复制命令到电脑端手动执行" />
+        </LinearLayout>
+
+        <!-- ================= 保活设置 ================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/CardTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sec_keepalive" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swAutoPopup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:checked="true"
+            android:text="自动弹出弹窗"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            style="@style/CardHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginBottom="2dp"
+            android:text="检测到蓝牙耳机连接时自动显示电量弹窗" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swForeground"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:checked="true"
+            android:text="双前台服务互拉保活"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            style="@style/CardHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginBottom="2dp"
+            android:text="两个前台服务相互拉起，降低被系统回收的概率" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swSilentNotif"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:checked="true"
+            android:text="静默通知（隐藏后台痕迹）"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            style="@style/CardHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginBottom="2dp"
+            android:text="使用低优先级渠道，尽量不在状态栏显示图标" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swBootStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:checked="true"
+            android:text="开机 / 重启后自动启动"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            style="@style/CardHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginBottom="2dp"
+            android:text="监听开机广播、应用更新与心跳闹钟自动拉起" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swBatteryOpt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:checked="false"
+            android:text="忽略电池优化"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            style="@style/CardHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginBottom="2dp"
+            android:text="引导系统将该应用列入不省电白名单" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAutoStartSetting"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="前往系统自启动管理" />
+        </LinearLayout>
+
+        <!-- ================= 预览 ================= -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTestPopup"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="14dp"
+            android:text="@string/test_popup" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

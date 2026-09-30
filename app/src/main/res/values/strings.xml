@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">耳机弹窗</string>
+    <string name="app_subtitle">蓝牙耳机连接 · 系统级电量弹窗</string>
+
+    <string name="sec_status">运行状态</string>
+    <string name="sec_appearance">弹窗外观</string>
+    <string name="sec_layout">尺寸与位置</string>
+    <string name="sec_animation">动画</string>
+    <string name="sec_permission">权限与 ADB 授权</string>
+    <string name="sec_keepalive">保活设置</string>
+
+    <string name="pick_image">选择图片 / GIF</string>
+    <string name="clear_image">清除</string>
+    <string name="test_popup">预览弹窗</string>
+    <string name="one_key_adb">一键 ADB 授权</string>
+    <string name="copy_adb">复制 ADB 命令</string>
+
+    <string name="notif_title">耳机弹窗监听中</string>
+    <string name="notif_text">正在监听蓝牙耳机连接，连接后立即弹出电量窗</string>
+    <string name="guard_notif_title">保活守护运行中</string>
+    <string name="guard_notif_text">正在维持后台存活，防止系统回收</string>
+</resources>
