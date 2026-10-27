@@ -8,3 +8,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# 签名密钥库（已迁移到 Actions Secrets，由 CI 解码恢复，勿再提交文件）
+release.keystore
+*.keystore
+*.jks
+keystore/
