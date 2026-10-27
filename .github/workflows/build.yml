@@ -12,6 +12,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Restore signing keystore from Actions secret
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          printf '%s' "$KEYSTORE_B64" | base64 -d > release.keystore
+          chmod 600 release.keystore
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
